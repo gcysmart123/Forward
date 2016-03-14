@@ -1,0 +1,168 @@
+C51 COMPILER V9.01   MEMU                                                                  12/26/2015 13:46:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MEMU
+OBJECT MODULE PLACED IN memu.OBJ
+COMPILER INVOKED BY: d:\Keil\C51\BIN\C51.EXE memu.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "stc15.h"
+   2          #include "ev1527.h"
+   3          #include "timer.h"
+   4          #include "pca.h"
+   5          #include "intrins.h"
+   6          #include "timer_2.h"
+   7          #include "out.h"
+   8          #include "memu.h"
+   9          #include "FUNCTION.h"
+  10          #include "debug.h"
+  11          
+  12          char num = 0;
+  13          unsigned char send_continue =0 ; 
+  14          unsigned char decode_success =0 ;               //解码完成且有效 红灯闪烁标志
+  15          
+  16          unsigned char i;
+  17          void memu()
+  18          {       
+  19   1                       
+  20   1                      switch (flag_Pattern)
+  21   1                      {
+  22   2                      case 0:         //待机 接收 
+  23   2                              receive_rf_decoder();   //解码函数
+  24   2                              if (return_again_receive_rf_decoder_finished() == 1) //标志位等于1 说明在2次检验下通过,接收到有效码
+  25   2                              {       
+  26   3                                      clear_again_receive_rf_decoder_finished();//清除标志位
+  27   3                                      if (num < 40)
+  28   3                                      {
+  29   4                                              decode_success = 1;
+  30   4                                              shanshuo = 0;
+  31   4      
+  32   4                                              old2_RF_RECE_REG_SAVE[0][num] = old2_RF_RECE_REG[0];
+  33   4                                              old2_RF_RECE_REG_SAVE[1][num] = old2_RF_RECE_REG[1];
+  34   4                                              old2_RF_RECE_REG_SAVE[2][num] = old2_RF_RECE_REG[2];
+  35   4                                              num++;
+  36   4                                      }
+  37   3                                      flag_Pattern = 3;
+  38   3                              }
+  39   2                              break;
+  40   2                      case 1:
+  41   2                              LED_G = 0;
+  42   2                              LED_R = 1;
+  43   2                              out();   //发送old2_RF_RECE_REG_SAVE[0][0]，
+  44   2                                                       //        old2_RF_RECE_REG_SAVE[1][0]，
+  45   2                                                       //        old2_RF_RECE_REG_SAVE[2][0]，
+  46   2                                                       //        的数据 持续0.8s
+  47   2      
+  48   2                              if (send_times==times)
+  49   2                              {
+  50   3                                      LED_R = 0;
+  51   3                                      send_times = 0; 
+  52   3                                      if(num==1)
+  53   3                                      {
+  54   4                                              for (i = 0; i < num; i++)
+  55   4                                              {
+C51 COMPILER V9.01   MEMU                                                                  12/26/2015 13:46:10 PAGE 2   
+
+  56   5                                                      old2_RF_RECE_REG_SAVE[0][i] = old2_RF_RECE_REG_SAVE[0][i + 1];
+  57   5                                                      old2_RF_RECE_REG_SAVE[1][i] = old2_RF_RECE_REG_SAVE[1][i + 1];
+  58   5                                                      old2_RF_RECE_REG_SAVE[2][i] = old2_RF_RECE_REG_SAVE[2][i + 1];
+  59   5                                              }
+  60   4                                              num--;
+  61   4                                              LED_R = 0;
+  62   4                                              flag_Pattern = 0;
+  63   4                                              
+  64   4                                      }
+  65   3                                      else
+  66   3                                      {
+  67   4                                              for (i = 0; i < num; i++)
+  68   4                                                      {
+  69   5                                                              old2_RF_RECE_REG_SAVE[0][i] = old2_RF_RECE_REG_SAVE[0][i + 1];
+  70   5                                                              old2_RF_RECE_REG_SAVE[1][i] = old2_RF_RECE_REG_SAVE[1][i + 1];
+  71   5                                                              old2_RF_RECE_REG_SAVE[2][i] = old2_RF_RECE_REG_SAVE[2][i + 1];
+  72   5                                                      }
+  73   4                                              num--;
+  74   4                                              flag_Pattern = 3;
+  75   4                                              send_continue = 1;
+  76   4                                              
+  77   4                                              //LED_R = 0;
+  78   4                                      }
+  79   3                                      
+  80   3                                      //flag_Pattern = 1;
+  81   3                              }
+  82   2                              else
+  83   2                              {
+  84   3                                      flag_Pattern = 2;       //延时 1.2s  2.2s  3.2s。。。。。
+  85   3                              }
+  86   2      
+  87   2                                                      
+  88   2                              break;
+  89   2                      case 2:                  //延时 1.2s  2.2s  3.2s。。。。。
+  90   2                              
+  91   2                              receive_rf_decoder();   //解码函数
+  92   2                              if (return_again_receive_rf_decoder_finished() == 1) //标志位等于1 说明在2次检验下通过,接收到有效码
+  93   2                              {
+  94   3                                      clear_again_receive_rf_decoder_finished();//清除标志位
+  95   3      
+  96   3                                      if (num < 40)
+  97   3                                      {
+  98   4                                              decode_success = 1;
+  99   4                                              shanshuo = 0;
+ 100   4      
+ 101   4                                              old2_RF_RECE_REG_SAVE[0][num] = old2_RF_RECE_REG[0];
+ 102   4                                              old2_RF_RECE_REG_SAVE[1][num] = old2_RF_RECE_REG[1];
+ 103   4                                              old2_RF_RECE_REG_SAVE[2][num] = old2_RF_RECE_REG[2];
+ 104   4                                              num++;
+ 105   4                                      }
+ 106   3                              }
+ 107   2      
+ 108   2                              if (received_end == 1)  //延时结束标准
+ 109   2                              {
+ 110   3                                      received_end = 0;
+ 111   3                                      flag_Pattern = 1;
+ 112   3                              }
+ 113   2                              break;
+ 114   2                      case 3:
+ 115   2                              receive_rf_decoder();   //解码函数
+ 116   2                              if (return_again_receive_rf_decoder_finished() == 1) //标志位等于1 说明在2次检验下通过,接收到有效码
+ 117   2                              {
+C51 COMPILER V9.01   MEMU                                                                  12/26/2015 13:46:10 PAGE 3   
+
+ 118   3                                      clear_again_receive_rf_decoder_finished();//清除标志位
+ 119   3                                      if (num < 40)
+ 120   3                                      {
+ 121   4                                              decode_success = 1;
+ 122   4                                              shanshuo = 0;
+ 123   4      
+ 124   4                                              old2_RF_RECE_REG_SAVE[0][num] = old2_RF_RECE_REG[0];
+ 125   4                                              old2_RF_RECE_REG_SAVE[1][num] = old2_RF_RECE_REG[1];
+ 126   4                                              old2_RF_RECE_REG_SAVE[2][num] = old2_RF_RECE_REG[2];
+ 127   4                                              num++;
+ 128   4                                      }
+ 129   3                              }
+ 130   2      
+ 131   2                              if (waite_end == 1)     //延时结束标志
+ 132   2                              {
+ 133   3                                      waite_end = 0;
+ 134   3                                      flag_Pattern = 1;
+ 135   3                              }
+ 136   2                      default:
+ 137   2                              break;
+ 138   2                      }
+ 139   1              
+ 140   1              
+ 141   1              }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    423    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

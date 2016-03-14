@@ -1,0 +1,124 @@
+C51 COMPILER V9.01   MAIN                                                                  12/26/2015 13:46:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: d:\Keil\C51\BIN\C51.EXE main.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "stc15.h"
+   2          #include "ev1527.h"
+   3          #include "timer.h"
+   4          #include "timer_2.h"
+   5          #include "pca.h"
+   6          #include "memu.h"
+   7          #include "FUNCTION.h"
+   8          #include "delay.h"
+   9          #include "eepram.h"
+  10          
+  11          unsigned char eep_dat[6]={0};
+  12          void main ()
+  13          {
+  14   1              unsigned char j;
+  15   1              Init_Timer0();
+  16   1      
+  17   1              Init_Timer2();
+  18   1                      
+  19   1              exint0_init();
+  20   1      
+  21   1              pca_timer_init();
+  22   1      
+  23   1              P3M1 = 0X04;                    //设置 P3.2为高阻状态 否则无法解码 P3.5为推挽输出 否则无法发出信号
+  24   1              P3M0 = 0X21;
+  25   1      
+  26   1              P1M1 = 0X00;                    
+  27   1              P1M0 = 0XFF;
+  28   1      
+  29   1              P5M0 = 0X30;
+  30   1              P5M1 = 0X00;
+  31   1      
+  32   1              LED_G = 1;
+  33   1              LED_R = 0;
+  34   1              P35 = 0;
+  35   1                      for(j=0;j<6;j++)
+  36   1              {
+  37   2                      eep_dat[j]=IapReadByte(IAP_ADDRESS+j);
+  38   2              }
+  39   1                      
+  40   1              f_num_3_h = eep_dat[0];
+  41   1              f_num_3_l = eep_dat[1];
+  42   1      
+  43   1              f_num_4_h = eep_dat[2];
+  44   1              f_num_4_l = eep_dat[3];
+  45   1      
+  46   1              f_num_5_h = eep_dat[4];
+  47   1              f_num_5_l = eep_dat[5];
+  48   1              if(f_num_3_h==0xff)
+  49   1              {
+  50   2                      f_num_3_h = 0;
+  51   2                      f_num_3_l = 1;
+  52   2              
+  53   2                      f_num_4_h = 0;
+  54   2                      f_num_4_l = 6;
+  55   2              
+C51 COMPILER V9.01   MAIN                                                                  12/26/2015 13:46:10 PAGE 2   
+
+  56   2                      f_num_5_h = 0;
+  57   2                      f_num_5_l = 6;
+  58   2      
+  59   2                      eep_dat[0]=     f_num_3_h;
+  60   2                      eep_dat[1]= f_num_3_l;
+  61   2                      
+  62   2                      eep_dat[2]= f_num_4_h; 
+  63   2                      eep_dat[3]= f_num_4_l; 
+  64   2                      
+  65   2                      eep_dat[4]= f_num_5_h; 
+  66   2                      eep_dat[5]= f_num_5_l; 
+  67   2      
+  68   2                              eep_cachu();
+  69   2                              for(j=0;j<6;j++)
+  70   2                              {
+  71   3                                      IapProgramByte(IAP_ADDRESS+j,eep_dat[j]);
+  72   3                              }
+  73   2              }
+  74   1                      
+  75   1      
+  76   1              while(1)
+  77   1              {               
+  78   2                      function();
+  79   2                      if(eep_dat[0]!=f_num_3_h||eep_dat[1]!=f_num_3_l)
+  80   2                      {
+  81   3                              eep_dat[0]=     f_num_3_h;
+  82   3                              eep_dat[1]= f_num_3_l;
+  83   3                      
+  84   3                              eep_dat[2]= f_num_4_h; 
+  85   3                              eep_dat[3]= f_num_4_l; 
+  86   3                      
+  87   3                              eep_dat[4]= f_num_5_h; 
+  88   3                              eep_dat[5]= f_num_5_l; 
+  89   3      
+  90   3                              eep_cachu();
+  91   3                              for(j=0;j<6;j++)
+  92   3                              {
+  93   4                                      IapProgramByte(IAP_ADDRESS+j,eep_dat[j]);
+  94   4                              }
+  95   3                      }
+  96   2                      memu();
+  97   2              
+  98   2              }
+  99   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    327    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      6       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

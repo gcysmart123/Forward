@@ -1,0 +1,15 @@
+"STARTUP.obj",
+"delay.obj",
+"display.obj",
+"ev1527.obj",
+"Function.obj",
+"key.obj",
+"main.obj",
+"memu.obj",
+"pca.obj",
+"out.obj",
+"timer.obj",
+"timer_2_2.obj",
+"EEPRAM.obj" 
+TO "×ª·¢Æ÷1.1" 
+RAMSIZE(256) 

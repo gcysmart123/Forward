@@ -1,0 +1,179 @@
+C51 COMPILER V9.01   EEPRAM                                                                12/26/2015 13:46:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE EEPRAM
+OBJECT MODULE PLACED IN EEPRAM.OBJ
+COMPILER INVOKED BY: d:\Keil\C51\BIN\C51.EXE EEPRAM.C LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*---------------------------------------------------------------------*/
+   2          /* --- STC MCU Limited ------------------------------------------------*/
+   3          /* --- STC15F4K60S4 系列 内部EEPROM举例--------------------------------*/
+   4          /* --- Mobile: (86)13922805190 ----------------------------------------*/
+   5          /* --- Fax: 86-0513-55012956,55012947,55012969 ------------------------*/
+   6          /* --- Tel: 86-0513-55012928,55012929,55012966-------------------------*/
+   7          /* --- Web: www.STCMCU.com --------------------------------------------*/
+   8          /* --- Web: www.GXWMCU.com --------------------------------------------*/
+   9          /* 如果要在程序中使用此代码,请在程序中注明使用了STC的资料及程序        */
+  10          /* 如果要在文章中应用此代码,请在文章中注明使用了STC的资料及程序        */
+  11          /*---------------------------------------------------------------------*/
+  12          
+  13          //本示例在Keil开发环境下请选择Intel的8058芯片型号进行编译
+  14          //若无特别说明,工作频率一般为11.0592MHz
+  15          
+  16          
+  17          //#include "reg51.h"
+  18          #include "intrins.h"
+  19          #include "stc15.h"
+  20          #include "eepram.h"
+  21          
+  22          void Delay(unsigned char n);
+  23          void IapIdle();
+  24          unsigned char IapReadByte(unsigned int addr);
+  25          void IapProgramByte(unsigned int addr, unsigned char dat);
+  26          void IapEraseSector(unsigned int addr);
+  27          
+  28          void eep_cachu()
+  29          {
+  30   1              unsigned int i;
+  31   1              Delay(10);                      //延时
+  32   1              IapEraseSector(IAP_ADDRESS);    //扇区擦除
+  33   1          for (i=0; i<512; i++)           //检测是否擦除成功(全FF检测)
+  34   1          {
+  35   2              if (IapReadByte(IAP_ADDRESS+i) != 0xff)
+  36   2                  goto Error;             //如果出错,则退出
+  37   2          }
+  38   1      Error:
+  39   1               IapEraseSector(IAP_ADDRESS);    //扇区擦除
+  40   1      }
+  41          //void main()
+  42          //{
+  43          //    WORD i;
+  44          //
+  45          //    P1 = 0xfe;                      //1111,1110 系统OK
+  46          //    Delay(10);                      //延时
+  47          //
+  48          //    IapEraseSector(IAP_ADDRESS);    //扇区擦除
+  49          //    for (i=0; i<512; i++)           //检测是否擦除成功(全FF检测)
+  50          //    {
+  51          //        if (IapReadByte(IAP_ADDRESS+i) != 0xff)
+  52          //            goto Error;             //如果出错,则退出
+  53          //    }
+  54          //    P1 = 0xfc;                      //1111,1100 擦除成功
+  55          //    Delay(10);                      //延时
+C51 COMPILER V9.01   EEPRAM                                                                12/26/2015 13:46:10 PAGE 2   
+
+  56          //
+  57          //    for (i=0; i<512; i++)           //编程512字节
+  58          //    {
+  59          //        IapProgramByte(IAP_ADDRESS+i, (BYTE)i);
+  60          //    }
+  61          //    P1 = 0xf8;                      //1111,1000 编程完成
+  62          //    Delay(10);                      //延时
+  63          //
+  64          //    for (i=0; i<512; i++)           //校验512字节
+  65          //    {
+  66          //        if (IapReadByte(IAP_ADDRESS+i) != (BYTE)i)
+  67          //            goto Error;             //如果校验错误,则退出
+  68          //    }
+  69          //    P1 = 0xf0;                      //1111,0000 测试完成
+  70          //    while (1);
+  71          //Error:
+  72          //    P1 &= 0x7f;                     //0xxx,xxxx IAP操作失败
+  73          //    while (1);
+  74          //}
+  75          
+  76          /*----------------------------
+  77          软件延时
+  78          ----------------------------*/
+  79          void Delay(unsigned char n)
+  80          {
+  81   1              unsigned int x;
+  82   1      
+  83   1          while (n--)
+  84   1          {
+  85   2              x = 0;
+  86   2              while (++x);
+  87   2          }
+  88   1      }
+  89          
+  90          /*----------------------------
+  91          关闭IAP
+  92          ----------------------------*/
+  93          void IapIdle()
+  94          {
+  95   1          IAP_CONTR = 0;                  //关闭IAP功能
+  96   1          IAP_CMD = 0;                    //清除命令寄存器
+  97   1          IAP_TRIG = 0;                   //清除触发寄存器
+  98   1          IAP_ADDRH = 0x80;               //将地址设置到非IAP区域
+  99   1          IAP_ADDRL = 0;
+ 100   1      }
+ 101          
+ 102          /*----------------------------
+ 103          从ISP/IAP/EEPROM区域读取一字节
+ 104          ----------------------------*/
+ 105          unsigned char IapReadByte(unsigned int addr)
+ 106          {
+ 107   1              unsigned char dat;                       //数据缓冲区
+ 108   1      
+ 109   1          IAP_CONTR = ENABLE_IAP;         //使能IAP
+ 110   1          IAP_CMD = CMD_READ;             //设置IAP命令
+ 111   1          IAP_ADDRL = addr;               //设置IAP低地址
+ 112   1          IAP_ADDRH = addr >> 8;          //设置IAP高地址
+ 113   1          IAP_TRIG = 0x5a;                //写触发命令(0x5a)
+ 114   1          IAP_TRIG = 0xa5;                //写触发命令(0xa5)
+ 115   1          _nop_();                        //等待ISP/IAP/EEPROM操作完成
+ 116   1          dat = IAP_DATA;                 //读ISP/IAP/EEPROM数据
+ 117   1          IapIdle();                      //关闭IAP功能
+C51 COMPILER V9.01   EEPRAM                                                                12/26/2015 13:46:10 PAGE 3   
+
+ 118   1      
+ 119   1          return dat;                     //返回
+ 120   1      }
+ 121          
+ 122          /*----------------------------
+ 123          写一字节数据到ISP/IAP/EEPROM区域
+ 124          ----------------------------*/
+ 125          void IapProgramByte(unsigned int addr, unsigned char dat)
+ 126          {
+ 127   1          IAP_CONTR = ENABLE_IAP;         //使能IAP
+ 128   1          IAP_CMD = CMD_PROGRAM;          //设置IAP命令
+ 129   1          IAP_ADDRL = addr;               //设置IAP低地址
+ 130   1          IAP_ADDRH = addr >> 8;          //设置IAP高地址
+ 131   1          IAP_DATA = dat;                 //写ISP/IAP/EEPROM数据
+ 132   1          IAP_TRIG = 0x5a;                //写触发命令(0x5a)
+ 133   1          IAP_TRIG = 0xa5;                //写触发命令(0xa5)
+ 134   1          _nop_();                        //等待ISP/IAP/EEPROM操作完成
+ 135   1          IapIdle();
+ 136   1      }
+ 137          
+ 138          /*----------------------------
+ 139          扇区擦除
+ 140          ----------------------------*/
+ 141          void IapEraseSector(unsigned int addr)
+ 142          {
+ 143   1          IAP_CONTR = ENABLE_IAP;         //使能IAP
+ 144   1          IAP_CMD = CMD_ERASE;            //设置IAP命令
+ 145   1          IAP_ADDRL = addr;               //设置IAP低地址
+ 146   1          IAP_ADDRH = addr >> 8;          //设置IAP高地址
+ 147   1          IAP_TRIG = 0x5a;                //写触发命令(0x5a)
+ 148   1          IAP_TRIG = 0xa5;                //写触发命令(0xa5)
+ 149   1          _nop_();                        //等待ISP/IAP/EEPROM操作完成
+ 150   1          IapIdle();
+ 151   1      }
+ 152          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    165    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
